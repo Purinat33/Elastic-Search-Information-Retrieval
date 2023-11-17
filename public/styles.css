@@ -1,0 +1,32 @@
+/* Update styles for .results-container and .result-box */
+.results-container {
+    display: grid;
+    /* Use grid layout */
+    grid-template-columns: 1fr;
+    /* Only one column */
+    gap: 20px;
+    padding: 20px;
+    background-color: #f7f7f7;
+}
+
+.result-box {
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.result-box h3 {
+    margin-top: 0;
+    font-size: 1.2em;
+}
+
+.result-box p {
+    margin-bottom: 10px;
+}
+
+.result-box a {
+    display: block;
+    color: #0366d6;
+}
