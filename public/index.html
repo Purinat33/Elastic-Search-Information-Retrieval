@@ -21,6 +21,12 @@
                 <button onclick="addLogicalOperator('OR')">OR</button>
                 <button onclick="addLogicalOperator('NOT')">NOT</button>
             </span>
+            <div class="search-modes">
+                <input type="radio" name="searchMode" value="single" onchange="toggleSearchMode()">
+                <label for="single">Single/Partial Query</label>
+                <input type="radio" name="searchMode" value="multi" onchange="toggleSearchMode()">
+                <label for="multi">Multiword Query</label>
+            </div>
         </div>
     </header>
 
@@ -30,6 +36,32 @@
 
     <script src="search.js"></script>
     <script>
+
+    let singlePartialMode = true;
+
+    function toggleSearchMode() {
+        singlePartialMode = document.querySelector('input[name="searchMode"]:checked').value === 'single';
+
+        const operatorButtons = document.querySelectorAll('.operators button');
+        operatorButtons.forEach(button => {
+            button.disabled = singlePartialMode;
+        });
+    }
+
+    function handleInput(event) {
+        if (singlePartialMode) {
+            const searchInput = document.getElementById('searchInput');
+            const selectionStart = searchInput.selectionStart;
+            const currentQuery = searchInput.value.trim();
+
+            if (event.inputType === 'insertText' && event.data === ' ') {
+                event.preventDefault();
+            } else if (event.inputType === 'insertText' && !event.data.match(/[a-zA-Z]/)) {
+                searchInput.value = currentQuery.substring(0, selectionStart) + currentQuery.substring(selectionStart + 1);
+                searchInput.setSelectionRange(selectionStart, selectionStart);
+            }
+        }
+    }
         function addLogicalOperator(operator) {
             const searchInput = document.getElementById('searchInput');
             const currentQuery = searchInput.value.trim();
