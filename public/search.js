@@ -4,10 +4,48 @@ document.getElementById('searchForm').addEventListener('submit', function (event
     searchElasticsearch(searchTerm);
 });
 
-function searchElasticsearch(query) {
-    const url = `http://localhost:9200/university/_search?q=${query}`;
 
-    fetch(url)
+function searchElasticsearch(query) {
+    let queryToUse = query; // By default, use the original query
+
+    // Check if the query contains at least one letter
+    if (/[a-zA-Z]/.test(query)) {
+        queryToUse = `${query}*`; // If it contains a letter, apply the wildcard
+    }
+
+        const wildcardQuery = {
+        query: {
+            bool: {
+                should: [
+                    {
+                        wildcard: {
+                            Name: queryToUse
+                        }
+                    },
+                    {
+                        wildcard: {
+                            Description: queryToUse
+                        }
+                    },
+                    {
+                        wildcard: {
+                            Website: queryToUse
+                        }
+                    }
+                ]
+            }
+        }
+    };
+
+    const url = `http://localhost:9200/university/_search`;
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(wildcardQuery)
+    })
         .then(response => response.json())
         .then(data => {
             displaySearchResults(data.hits.hits);
@@ -17,41 +55,6 @@ function searchElasticsearch(query) {
         });
 }
 
-// function displaySearchResults(results) {
-//     const searchResults = document.getElementById('searchResults');
-//     searchResults.innerHTML = '';
-
-//     results.forEach(result => {
-//         const resultElement = document.createElement('div');
-//         resultElement.innerHTML = `<h3>${result._source.Name}</h3><p>${result._source.Description}</p>`;
-        
-//         // Check if the Website property exists before appending it to the resultElement
-//         if (result._source.Website) {
-//             resultElement.innerHTML += `<a href="${result._source.Website}" target="_blank">Visit Website</a>`;
-//         }
-
-//         searchResults.appendChild(resultElement);
-//     });
-// }
-
-// function displaySearchResults(results) {
-//     const searchResults = document.getElementById('searchResults');
-//     searchResults.innerHTML = '';
-
-//     results.forEach(result => {
-//         const resultElement = document.createElement('div');
-//         resultElement.classList.add('result-box'); // Add the 'result-box' class
-
-//         resultElement.innerHTML = `<h3>${result._source.Name}</h3><p>${result._source.Description}</p>`;
-        
-//         // Check if the Website property exists before appending it to the resultElement
-//         if (result._source.Website) {
-//             resultElement.innerHTML += `<a href="${result._source.Website}" target="_blank">Visit Website</a>`;
-//         }
-
-//         searchResults.appendChild(resultElement);
-//     });
-// }
 
 // Check if the search input is empty when the page loads
 window.addEventListener('load', function() {
