@@ -12,8 +12,11 @@
     <header>
         <h1>United States of Universities</h1>
         <form id="searchForm">
-            <input type="text" id="searchInput" placeholder="Search...">
+            <input type="text" id="searchInput" placeholder="Search..." oninput="checkBackspace(event)">
             <button type="submit">Search</button>
+            <button onclick="addLogicalOperator('AND')" class="operators">AND</button>
+            <button onclick="addLogicalOperator('OR')" class="operators">OR</button>
+            <button onclick="addLogicalOperator('NOT')" class="operators">NOT</button>
         </form>
     </header>
 
@@ -23,14 +26,34 @@
 
     <script src="search.js"></script>
     <script>
-        const searchInput = document.getElementById('searchInput');
+        function addLogicalOperator(operator) {
+            const searchInput = document.getElementById('searchInput');
+            const currentQuery = searchInput.value.trim();
+            const selectionStart = searchInput.selectionStart;
 
-        searchInput.addEventListener('input', function (event) {
-            const inputValue = event.target.value;
-            if (inputValue.includes(' ')) {
-                event.target.value = inputValue.replace(/\s/g, ''); // Remove spaces from the input value
+            if (currentQuery.length > 0) {
+                searchInput.value = `${currentQuery} ${operator} `;
+            } else {
+                searchInput.value = `${operator} `;
             }
-        });
+
+            searchInput.setSelectionRange(selectionStart + operator.length + 1, selectionStart + operator.length + 1);
+        }
+
+        function checkBackspace(event) {
+                const searchInput = document.getElementById('searchInput');
+                const selectionStart = searchInput.selectionStart;
+
+                if (event.inputType === 'deleteContentBackward' && selectionStart > 0) {
+                    const textBeforeCursor = searchInput.value.substring(0, selectionStart).trim();
+                    const lastWord = textBeforeCursor.split(/\s+/).pop();
+
+                    if (['AND', 'OR', 'NOT'].includes(lastWord) && selectionStart === textBeforeCursor.length) {
+                        searchInput.value = searchInput.value.substring(0, selectionStart - lastWord.length);
+                        searchInput.setSelectionRange(selectionStart - lastWord.length, selectionStart - lastWord.length);
+                    }
+                }
+            }
     </script>
 </body>
 
