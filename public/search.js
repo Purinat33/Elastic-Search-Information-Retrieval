@@ -41,17 +41,36 @@ function searchElasticsearch(query, operator) {
             }
         };
     } else {
-        // For multiword query mode, perform cross_fields multi_match query
-        requestBody = {
-            query: {
-                multi_match: {
-                    query: queryToUse,
-                    type: "cross_fields",
-                    fields: ["Name", "Description", "Website"],
-                    operator: operator // Change to "AND" if needed
+        const isNotOperator = operator === 'NOT';
+        const terms = queryToUse.split(/\s+/);
+
+        if (isNotOperator) {
+            requestBody = {
+                query: {
+                    bool: {
+                        must_not: {
+                            multi_match: {
+                                query: terms[1], // Excludes the term after 'NOT'
+                                type: "cross_fields",
+                                fields: ["Name", "Description", "Website"],
+                                operator: "OR" // Change to "AND" if needed
+                            }
+                        }
+                    }
                 }
-            }
-        };
+            };
+        } else {
+            requestBody = {
+                query: {
+                    multi_match: {
+                        query: queryToUse,
+                        type: "cross_fields",
+                        fields: ["Name", "Description", "Website"],
+                        operator: operator // Change to "AND" if needed
+                    }
+                }
+            };
+        }
     }
 
     const url = `http://localhost:9200/university/_search`;
