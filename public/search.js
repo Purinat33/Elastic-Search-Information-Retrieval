@@ -4,7 +4,6 @@ document.getElementById('searchForm').addEventListener('submit', function (event
     searchElasticsearch(searchTerm);
 });
 
-
 function searchElasticsearch(query) {
     const queryToUse = query.trim(); // Remove leading/trailing whitespaces
 
@@ -13,56 +12,61 @@ function searchElasticsearch(query) {
         return; // Exit function early if query is empty
     }
 
-    const wildcardQuery = {
-        query: {
-            bool: {
-                should: [
-                    {
-                        wildcard: {
-                            Name: `${queryToUse}*`
-                        }
-                    },
-                    {
-                        wildcard: {
-                            Description: `${queryToUse}*`
-                        }
-                    },
-                    {
-                        wildcard: {
-                            Website: `${queryToUse}*`
-                        }
-                    }
-                ]
-            }
-        }
-    };
+    let requestBody;
 
-    const matchQuery = {
-        query: {
-            bool: {
-                should: [
-                    {
-                        match_phrase: {
-                            Name: queryToUse
+    if (singlePartialMode) {
+        // For single/partial query mode, perform wildcard searches
+        requestBody = {
+            query: {
+                bool: {
+                    should: [
+                        {
+                            wildcard: {
+                                Name: `${queryToUse}*`
+                            }
+                        },
+                        {
+                            wildcard: {
+                                Description: `${queryToUse}*`
+                            }
+                        },
+                        {
+                            wildcard: {
+                                Website: `${queryToUse}*`
+                            }
                         }
-                    },
-                    {
-                        match_phrase: {
-                            Description: queryToUse
-                        }
-                    },
-                    {
-                        match_phrase: {
-                            Website: queryToUse
-                        }
-                    }
-                ]
+                    ]
+                }
             }
-        }
-    };
+        };
+    } else {
+        // For multiword query mode, perform match_phrase searches
+        requestBody = {
+            query: {
+                bool: {
+                    should: [
+                        {
+                            match_phrase: {
+                                Name: queryToUse
+                            }
+                        },
+                        {
+                            match_phrase: {
+                                Description: queryToUse
+                            }
+                        },
+                        {
+                            match_phrase: {
+                                Website: queryToUse
+                            }
+                        }
+                    ]
+                }
+            }
+        };
+    }
 
     const url = `http://localhost:9200/university/_search`;
-    const requestBody = singlePartialMode ? wildcardQuery : matchQuery;
 
     fetch(url, {
         method: 'POST',
