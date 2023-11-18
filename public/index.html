@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="styles.css" />
     <title>University Search</title>
+
 </head>
 
 <body>
@@ -13,7 +15,7 @@
         <h1>United States of Universities</h1>
         <div class="search-container">
             <form id="searchForm">
-                <input type="text" id="searchInput" placeholder="Search..." oninput="checkBackspace(event)">
+                <input type="text" id="searchInput" placeholder="Search..." oninput="handleInput(event)">
                 <button type="submit">Search</button>
             </form>
             <span class='operators'>
@@ -22,7 +24,7 @@
                 <button onclick="addLogicalOperator('NOT')">NOT</button>
             </span>
             <div class="search-modes">
-                <input type="radio" name="searchMode" value="single" onchange="toggleSearchMode()">
+                <input type="radio" name="searchMode" value="single" onchange="toggleSearchMode()" checked>
                 <label for="single">Single/Partial Query</label>
                 <input type="radio" name="searchMode" value="multi" onchange="toggleSearchMode()">
                 <label for="multi">Multiword Query</label>
@@ -37,60 +39,65 @@
     <script src="search.js"></script>
     <script>
 
-    let singlePartialMode = true;
+        let singlePartialMode = true;
 
-    function toggleSearchMode() {
-        singlePartialMode = document.querySelector('input[name="searchMode"]:checked').value === 'single';
+        function toggleSearchMode() {
+            singlePartialMode = document.querySelector('input[name="searchMode"]:checked').value === 'single';
 
-        const operatorButtons = document.querySelectorAll('.operators button');
-        operatorButtons.forEach(button => {
-            button.disabled = singlePartialMode;
-        });
-    }
+            const operatorButtons = document.querySelectorAll('.operators button');
+            operatorButtons.forEach(button => {
+                button.disabled = singlePartialMode;
+            });
+        }
 
-    function handleInput(event) {
-        if (singlePartialMode) {
-            const searchInput = document.getElementById('searchInput');
-            const selectionStart = searchInput.selectionStart;
-            const currentQuery = searchInput.value.trim();
 
-            if (event.inputType === 'insertText' && event.data === ' ') {
-                event.preventDefault();
-            } else if (event.inputType === 'insertText' && !event.data.match(/[a-zA-Z]/)) {
-                searchInput.value = currentQuery.substring(0, selectionStart) + currentQuery.substring(selectionStart + 1);
-                searchInput.setSelectionRange(selectionStart, selectionStart);
+        function handleInput(event) {
+            if (singlePartialMode) {
+                const searchInput = document.getElementById('searchInput');
+                const selectionStart = searchInput.selectionStart;
+                const currentQuery = searchInput.value.trim();
+
+                if (event.inputType === 'insertText' && event.data === ' ') {
+                    searchInput.value = currentQuery.substring(0, selectionStart) + currentQuery.substring(selectionStart + 1);
+                    searchInput.setSelectionRange(selectionStart, selectionStart);
+                    event.preventDefault();
+                } else if (event.inputType === 'insertText' && !event.data.match(/[a-zA-Z]/)) {
+                    searchInput.value = currentQuery.substring(0, selectionStart) + currentQuery.substring(selectionStart + 1);
+                    searchInput.setSelectionRange(selectionStart, selectionStart);
+                }
             }
         }
-    }
         function addLogicalOperator(operator) {
             const searchInput = document.getElementById('searchInput');
             const currentQuery = searchInput.value.trim();
             const selectionStart = searchInput.selectionStart;
 
-            if (currentQuery.length > 0) {
-                searchInput.value = `${currentQuery} ${operator} `;
-            } else {
-                searchInput.value = `${operator} `;
-            }
+            if (!singlePartialMode) {
+                if (currentQuery.length > 0) {
+                    searchInput.value = `${currentQuery} ${operator} `;
+                } else {
+                    searchInput.value = `${operator} `;
+                }
 
-            searchInput.setSelectionRange(selectionStart + operator.length + 1, selectionStart + operator.length + 1);
+                searchInput.setSelectionRange(selectionStart + operator.length + 1, selectionStart + operator.length + 1);
+            }
         }
 
         function checkBackspace(event) {
-                const searchInput = document.getElementById('searchInput');
-                const selectionStart = searchInput.selectionStart;
+            const searchInput = document.getElementById('searchInput');
+            const selectionStart = searchInput.selectionStart;
 
-                if (event.inputType === 'deleteContentBackward' && selectionStart > 0) {
-                    const textBeforeCursor = searchInput.value.substring(0, selectionStart).trim();
-                    const lastWord = textBeforeCursor.split(/\s+/).pop();
+            if (event.inputType === 'deleteContentBackward' && selectionStart > 0) {
+                const textBeforeCursor = searchInput.value.substring(0, selectionStart).trim();
+                const lastWord = textBeforeCursor.split(/\s+/).pop();
 
-                    // ONLY ALL Caps `and or not` to prevent cases like 'St. Andrews' :shrug:
-                    if (['AND', 'OR', 'NOT'].includes(lastWord) && selectionStart === textBeforeCursor.length) {
-                        searchInput.value = searchInput.value.substring(0, selectionStart - lastWord.length);
-                        searchInput.setSelectionRange(selectionStart - lastWord.length, selectionStart - lastWord.length);
-                    }
+                // ONLY ALL Caps `and or not` to prevent cases like 'St. Andrews' :shrug:
+                if (['AND', 'OR', 'NOT'].includes(lastWord) && selectionStart === textBeforeCursor.length) {
+                    searchInput.value = searchInput.value.substring(0, selectionStart - lastWord.length);
+                    searchInput.setSelectionRange(selectionStart - lastWord.length, selectionStart - lastWord.length);
                 }
             }
+        }
     </script>
 </body>
 

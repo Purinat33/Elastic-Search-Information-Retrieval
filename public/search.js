@@ -6,29 +6,53 @@ document.getElementById('searchForm').addEventListener('submit', function (event
 
 
 function searchElasticsearch(query) {
-    let queryToUse = query; // By default, use the original query
+    const queryToUse = query.trim(); // Remove leading/trailing whitespaces
 
-    // Check if the query contains at least one letter
-    if (/[a-zA-Z]/.test(query)) {
-        queryToUse = `${query}*`; // If it contains a letter, apply the wildcard
+    if (queryToUse === '') {
+        displaySearchResults([]); // Display no results if query is empty
+        return; // Exit function early if query is empty
     }
 
-        const wildcardQuery = {
+    const wildcardQuery = {
         query: {
             bool: {
                 should: [
                     {
                         wildcard: {
+                            Name: `${queryToUse}*`
+                        }
+                    },
+                    {
+                        wildcard: {
+                            Description: `${queryToUse}*`
+                        }
+                    },
+                    {
+                        wildcard: {
+                            Website: `${queryToUse}*`
+                        }
+                    }
+                ]
+            }
+        }
+    };
+
+    const matchQuery = {
+        query: {
+            bool: {
+                should: [
+                    {
+                        match_phrase: {
                             Name: queryToUse
                         }
                     },
                     {
-                        wildcard: {
+                        match_phrase: {
                             Description: queryToUse
                         }
                     },
                     {
-                        wildcard: {
+                        match_phrase: {
                             Website: queryToUse
                         }
                     }
@@ -38,13 +62,14 @@ function searchElasticsearch(query) {
     };
 
     const url = `http://localhost:9200/university/_search`;
+    const requestBody = singlePartialMode ? wildcardQuery : matchQuery;
 
     fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(wildcardQuery)
+        body: JSON.stringify(requestBody)
     })
         .then(response => response.json())
         .then(data => {
@@ -54,6 +79,7 @@ function searchElasticsearch(query) {
             console.error('Error fetching data from Elasticsearch:', error);
         });
 }
+
 
 
 // Check if the search input is empty when the page loads
