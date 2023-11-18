@@ -54,6 +54,15 @@ a:hover {
     color: #0366d6;
 }
 
+.search-container {
+    display: flex;
+    /* Use flexbox */
+    align-items: center;
+    /* Vertically align items */
+    gap: 10px;
+    /* Add spacing between form and buttons */
+}
+
 /* Update styles for the search bar and button */
 #searchInput {
     padding: 8px 12px;
@@ -84,11 +93,18 @@ a:hover {
     /* Change background color on hover */
 }
 
+/* Style for the container */
+.operators {
+    display: inline-block;
+    /* Ensures the buttons are in a row */
+}
+
+/* Style for the buttons */
 .operators button {
     padding: 8px 16px;
     border: none;
     border-radius: 4px;
-    background-color: #0366d6;
+    background-color: #ff2222;
     color: white;
     font-size: 16px;
     cursor: pointer;
@@ -96,6 +112,6 @@ a:hover {
 }
 
 .operators button:hover {
-    background-color: #034ea2;
+    background-color: #ff4ea2;
     /* Change background color on hover */
 }

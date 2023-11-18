@@ -11,13 +11,17 @@
 <body>
     <header>
         <h1>United States of Universities</h1>
-        <form id="searchForm">
-            <input type="text" id="searchInput" placeholder="Search..." oninput="checkBackspace(event)">
-            <button type="submit">Search</button>
-            <button onclick="addLogicalOperator('AND')" class="operators">AND</button>
-            <button onclick="addLogicalOperator('OR')" class="operators">OR</button>
-            <button onclick="addLogicalOperator('NOT')" class="operators">NOT</button>
-        </form>
+        <div class="search-container">
+            <form id="searchForm">
+                <input type="text" id="searchInput" placeholder="Search..." oninput="checkBackspace(event)">
+                <button type="submit">Search</button>
+            </form>
+            <span class='operators'>
+                <button onclick="addLogicalOperator('AND')">AND</button>
+                <button onclick="addLogicalOperator('OR')">OR</button>
+                <button onclick="addLogicalOperator('NOT')">NOT</button>
+            </span>
+        </div>
     </header>
 
     <main id="searchResults" class="results-container">
@@ -48,6 +52,7 @@
                     const textBeforeCursor = searchInput.value.substring(0, selectionStart).trim();
                     const lastWord = textBeforeCursor.split(/\s+/).pop();
 
+                    // ONLY ALL Caps `and or not` to prevent cases like 'St. Andrews' :shrug:
                     if (['AND', 'OR', 'NOT'].includes(lastWord) && selectionStart === textBeforeCursor.length) {
                         searchInput.value = searchInput.value.substring(0, selectionStart - lastWord.length);
                         searchInput.setSelectionRange(selectionStart - lastWord.length, selectionStart - lastWord.length);
