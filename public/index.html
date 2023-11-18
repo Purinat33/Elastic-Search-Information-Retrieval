@@ -22,6 +22,16 @@
     </main>
 
     <script src="search.js"></script>
+    <script>
+        const searchInput = document.getElementById('searchInput');
+
+        searchInput.addEventListener('input', function (event) {
+            const inputValue = event.target.value;
+            if (inputValue.includes(' ')) {
+                event.target.value = inputValue.replace(/\s/g, ''); // Remove spaces from the input value
+            }
+        });
+    </script>
 </body>
 
 </html>
