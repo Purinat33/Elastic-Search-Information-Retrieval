@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -21,14 +20,8 @@
             <span class='operators'>
                 <button onclick="addLogicalOperator('AND')">AND</button>
                 <button onclick="addLogicalOperator('OR')">OR</button>
-                <button onclick="addLogicalOperator('NOT')">NOT</button>
+                <!-- <button onclick="addLogicalOperator('NOT')">NOT</button> -->
             </span>
-            <div class="search-modes">
-                <input type="radio" name="searchMode" value="single" onchange="toggleSearchMode()" checked>
-                <label for="single">Single/Partial Query</label>
-                <input type="radio" name="searchMode" value="multi" onchange="toggleSearchMode()">
-                <label for="multi">Multiword Query</label>
-            </div>
         </div>
     </header>
 
@@ -38,67 +31,122 @@
 
     <script src="search.js"></script>
     <script>
-
-        let singlePartialMode = true;
-
-        function toggleSearchMode() {
-            singlePartialMode = document.querySelector('input[name="searchMode"]:checked').value === 'single';
-
-            const operatorButtons = document.querySelectorAll('.operators button');
-            operatorButtons.forEach(button => {
-                button.disabled = singlePartialMode;
-            });
-        }
-
-
         function handleInput(event) {
-            if (singlePartialMode) {
-                const searchInput = document.getElementById('searchInput');
-                const selectionStart = searchInput.selectionStart;
-                const currentQuery = searchInput.value.trim();
-
-                if (event.inputType === 'insertText' && event.data === ' ') {
-                    searchInput.value = currentQuery.substring(0, selectionStart) + currentQuery.substring(selectionStart + 1);
-                    searchInput.setSelectionRange(selectionStart, selectionStart);
-                    event.preventDefault();
-                } else if (event.inputType === 'insertText' && !event.data.match(/[a-zA-Z]/)) {
-                    searchInput.value = currentQuery.substring(0, selectionStart) + currentQuery.substring(selectionStart + 1);
-                    searchInput.setSelectionRange(selectionStart, selectionStart);
-                }
-            }
-        }
-        function addLogicalOperator(operator) {
-                const searchInput = document.getElementById('searchInput');
-                const currentQuery = searchInput.value.trim();
-                const selectionStart = searchInput.selectionStart;
-
-                if (!singlePartialMode) {
-                    if (currentQuery.length > 0) {
-                        searchInput.value = `${currentQuery} ${operator} `;
-                    } else {
-                        searchInput.value = `${operator} `;
-                    }
-
-                    searchInput.setSelectionRange(selectionStart + operator.length + 1, selectionStart + operator.length + 1);
-
-                    currentOperator = operator; // Set the current operator
-                }
-            }
-
-
-        function checkBackspace(event) {
             const searchInput = document.getElementById('searchInput');
+            const query = searchInput.value.trim();
+            // You can directly perform the search here passing the query to Elasticsearch
+        }
+
+        function addLogicalOperator(operator) {
+            const searchInput = document.getElementById('searchInput');
+            const currentQuery = searchInput.value.trim();
             const selectionStart = searchInput.selectionStart;
 
-            if (event.inputType === 'deleteContentBackward' && selectionStart > 0) {
-                const textBeforeCursor = searchInput.value.substring(0, selectionStart).trim();
-                const lastWord = textBeforeCursor.split(/\s+/).pop();
+            if (currentQuery.length > 0) {
+                searchInput.value = `${currentQuery} ${operator} `;
+            } else {
+                searchInput.value = `${operator} `;
+            }
 
-                // ONLY ALL Caps `and or not` to prevent cases like 'St. Andrews' :shrug:
-                if (['AND', 'OR', 'NOT'].includes(lastWord) && selectionStart === textBeforeCursor.length) {
-                    searchInput.value = searchInput.value.substring(0, selectionStart - lastWord.length);
-                    searchInput.setSelectionRange(selectionStart - lastWord.length, selectionStart - lastWord.length);
+            searchInput.setSelectionRange(selectionStart + operator.length + 1, selectionStart + operator.length + 1);
+
+            // You can handle the operator here or include it in the search directly
+            const currentOperator = operator;
+        }
+
+        document.getElementById('searchForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const searchTerm = document.getElementById('searchInput').value;
+            searchElasticsearch(searchTerm);
+        });
+
+        
+    function searchElasticsearch(query) {
+        const queryToUse = query.trim(); // Remove leading/trailing whitespaces
+
+        if (queryToUse === '') {
+            displaySearchResults([]); // Display no results if query is empty
+            return; // Exit function early if query is empty
+        }
+
+        // Split the query by spaces to handle logical operators
+        const terms = queryToUse.split(/\s+/);
+        const shouldClauses = [];
+        let currentOperator = 'OR'; // Default operator is OR
+
+        terms.forEach(term => {
+            if (term.toUpperCase() === 'AND') {
+                currentOperator = 'AND'; // Set the operator to AND if encountered
+            } else if (term.toUpperCase() === 'OR') {
+                currentOperator = 'OR'; // Set the operator to OR if encountered
+            } else {
+                // For other terms, construct wildcard queries for multiple fields
+                const wildcardQuery = {
+                    bool: {
+                        should: [
+                            { wildcard: { Name: `${term}*` } },
+                            { wildcard: { Description: `${term}*` } },
+                            { wildcard: { Website: `${term}*` } }
+                        ]
+                    }
+                };
+
+                // Use 'must' for 'AND' and 'should' for 'OR'
+                if (currentOperator === 'AND') {
+                    shouldClauses.push({ bool: { must: wildcardQuery } });
+                } else {
+                    shouldClauses.push(wildcardQuery);
                 }
+            }
+        });
+
+        const requestBody = {
+            query: {
+                bool: {
+                    should: shouldClauses
+                }
+            }
+        };
+
+        const url = `http://localhost:9200/university/_search`;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        })
+            .then(response => response.json())
+            .then(data => {
+                displaySearchResults(data.hits.hits);
+            })
+            .catch(error => {
+                console.error('Error fetching data from Elasticsearch:', error);
+            });
+    }
+
+        function displaySearchResults(results) {
+            const searchResults = document.getElementById('searchResults');
+            searchResults.innerHTML = '';
+
+            if (results.length === 0) {
+                const noResultsCard = document.createElement('div');
+                noResultsCard.classList.add('result-box');
+                noResultsCard.innerHTML = `<p>No Results Found</p>`;
+                searchResults.appendChild(noResultsCard);
+            } else {
+                results.forEach(result => {
+                    const resultElement = document.createElement('div');
+                    resultElement.classList.add('result-box');
+                    resultElement.innerHTML = `<h3>${result._source.Name}</h3><p>${result._source.Description}</p>`;
+
+                    if (result._source.Website) {
+                        resultElement.innerHTML += `<a href="${result._source.Website}" target="_blank">Visit Website</a>`;
+                    }
+
+                    searchResults.appendChild(resultElement);
+                });
             }
         }
     </script>

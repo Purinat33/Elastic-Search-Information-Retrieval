@@ -1,11 +1,10 @@
-document.getElementById('searchForm').addEventListener('submit', function (event) {
+document.getElementById('searchForm').addEventListener('submit', function(event) {
     event.preventDefault();
     const searchTerm = document.getElementById('searchInput').value;
-    searchElasticsearch(searchTerm, currentOperator);
+    searchElasticsearch(searchTerm);
 });
 
-
-function searchElasticsearch(query, operator) {
+function searchElasticsearch(query) {
     const queryToUse = query.trim(); // Remove leading/trailing whitespaces
 
     if (queryToUse === '') {
@@ -13,66 +12,34 @@ function searchElasticsearch(query, operator) {
         return; // Exit function early if query is empty
     }
 
-    let requestBody;
+    // Split the query by spaces to handle logical operators
+    const terms = queryToUse.split(/\s+/);
+    const shouldClauses = [];
 
-    if (singlePartialMode) {
-        // For single/partial query mode, perform wildcard searches
-        requestBody = {
-            query: {
-                bool: {
-                    should: [
-                        {
-                            wildcard: {
-                                Name: `${queryToUse}*`
-                            }
-                        },
-                        {
-                            wildcard: {
-                                Description: `${queryToUse}*`
-                            }
-                        },
-                        {
-                            wildcard: {
-                                Website: `${queryToUse}*`
-                            }
-                        }
-                    ]
-                }
-            }
-        };
-    } else {
-        const isNotOperator = operator === 'NOT';
-        const terms = queryToUse.split(/\s+/);
-
-        if (isNotOperator) {
-            requestBody = {
-                query: {
-                    bool: {
-                        must_not: {
-                            multi_match: {
-                                query: terms[1], // Excludes the term after 'NOT'
-                                type: "cross_fields",
-                                fields: ["Name", "Description", "Website"],
-                                operator: "OR" // Change to "AND" if needed
-                            }
-                        }
-                    }
-                }
-            };
+    terms.forEach(term => {
+        if (term.toUpperCase() === 'AND' || term.toUpperCase() === 'OR') {
+            // For 'AND' and 'OR' operators, add them to the shouldClauses array
+            shouldClauses.push(term.toUpperCase());
         } else {
-            requestBody = {
-                query: {
-                    multi_match: {
-                        query: queryToUse,
-                        type: "cross_fields",
-                        fields: ["Name", "Description", "Website"],
-                        operator: operator // Change to "AND" if needed
-                    }
+            // For other terms, construct wildcard queries as before
+            const wildcardQuery = {
+                wildcard: {
+                    Name: `${term}*`
                 }
             };
-        }
-    }
 
+            shouldClauses.push(wildcardQuery);
+        }
+    });
+
+    const requestBody = {
+        query: {
+            bool: {
+                should: shouldClauses
+            }
+        }
+    };
+    
     const url = `http://localhost:9200/university/_search`;
 
     fetch(url, {
@@ -82,25 +49,14 @@ function searchElasticsearch(query, operator) {
         },
         body: JSON.stringify(requestBody)
     })
-        .then(response => response.json())
-        .then(data => {
-            displaySearchResults(data.hits.hits);
-        })
-        .catch(error => {
-            console.error('Error fetching data from Elasticsearch:', error);
-        });
+    .then(response => response.json())
+    .then(data => {
+        displaySearchResults(data.hits.hits);
+    })
+    .catch(error => {
+        console.error('Error fetching data from Elasticsearch:', error);
+    });
 }
-
-
-
-// Check if the search input is empty when the page loads
-window.addEventListener('load', function() {
-    const searchTerm = document.getElementById('searchInput').value;
-    if (searchTerm.trim() === '') {
-        searchElasticsearch(searchTerm);
-    }
-});
-
 
 // Function to display search results or a "No Results Found" card
 function displaySearchResults(results) {
@@ -128,3 +84,11 @@ function displaySearchResults(results) {
         });
     }
 }
+
+// Check if the search input is empty when the page loads
+window.addEventListener('load', function() {
+    const searchTerm = document.getElementById('searchInput').value;
+    if (searchTerm.trim() === '') {
+        searchElasticsearch(searchTerm);
+    }
+});
