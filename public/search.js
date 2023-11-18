@@ -1,10 +1,11 @@
 document.getElementById('searchForm').addEventListener('submit', function (event) {
     event.preventDefault();
     const searchTerm = document.getElementById('searchInput').value;
-    searchElasticsearch(searchTerm);
+    searchElasticsearch(searchTerm, currentOperator);
 });
 
-function searchElasticsearch(query) {
+
+function searchElasticsearch(query, operator) {
     const queryToUse = query.trim(); // Remove leading/trailing whitespaces
 
     if (queryToUse === '') {
@@ -40,27 +41,14 @@ function searchElasticsearch(query) {
             }
         };
     } else {
-        // For multiword query mode, perform match_phrase searches
+        // For multiword query mode, perform cross_fields multi_match query
         requestBody = {
             query: {
-                bool: {
-                    should: [
-                        {
-                            match_phrase: {
-                                Name: queryToUse
-                            }
-                        },
-                        {
-                            match_phrase: {
-                                Description: queryToUse
-                            }
-                        },
-                        {
-                            match_phrase: {
-                                Website: queryToUse
-                            }
-                        }
-                    ]
+                multi_match: {
+                    query: queryToUse,
+                    type: "cross_fields",
+                    fields: ["Name", "Description", "Website"],
+                    operator: operator // Change to "AND" if needed
                 }
             }
         };

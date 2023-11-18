@@ -68,20 +68,23 @@
             }
         }
         function addLogicalOperator(operator) {
-            const searchInput = document.getElementById('searchInput');
-            const currentQuery = searchInput.value.trim();
-            const selectionStart = searchInput.selectionStart;
+                const searchInput = document.getElementById('searchInput');
+                const currentQuery = searchInput.value.trim();
+                const selectionStart = searchInput.selectionStart;
 
-            if (!singlePartialMode) {
-                if (currentQuery.length > 0) {
-                    searchInput.value = `${currentQuery} ${operator} `;
-                } else {
-                    searchInput.value = `${operator} `;
+                if (!singlePartialMode) {
+                    if (currentQuery.length > 0) {
+                        searchInput.value = `${currentQuery} ${operator} `;
+                    } else {
+                        searchInput.value = `${operator} `;
+                    }
+
+                    searchInput.setSelectionRange(selectionStart + operator.length + 1, selectionStart + operator.length + 1);
+
+                    currentOperator = operator; // Set the current operator
                 }
-
-                searchInput.setSelectionRange(selectionStart + operator.length + 1, selectionStart + operator.length + 1);
             }
-        }
+
 
         function checkBackspace(event) {
             const searchInput = document.getElementById('searchInput');
