@@ -15,6 +15,7 @@
             <form id="searchForm">
                 <input type="text" id="searchInput" placeholder="Search..." oninput="handleInput(event)">
                 <button type="submit">Completed Search</button>
+                <button type="reset">Clear Search</button>
             </form>
             <span class='operators'>
                 <button onclick="addLogicalOperator('AND')">AND</button>
@@ -186,7 +187,7 @@
     `;
 
                         const partialSearchButton = document.createElement('button');
-                        partialSearchButton.setAttribute('type', 'submit');
+                        partialSearchButton.setAttribute('type', 'button');
                         partialSearchButton.textContent = 'Partial Search';
                         partialSearchButton.setAttribute('id', 'partialSearchButton');
                         partialSearchButton.style.cssText = `
@@ -199,6 +200,8 @@
         cursor: pointer;
         transition: background-color 0.3s ease-in-out;
     `;
+
+
                         const newPartialSearchForm = document.createElement('form');
                         newPartialSearchForm.setAttribute('id', 'partialSearchForm');
                         // newPartialSearchForm.addEventListener('submit', function (event) {
@@ -296,6 +299,11 @@
                         const partialQuery = event.target.value.trim();
                         handlePartialInput(partialQuery);
                     });
+                    // Remove the submit event listener for the partial search form
+                    const partialSearchForm = document.getElementById('partialSearchForm');
+                    if (partialSearchForm) {
+                        partialSearchForm.removeEventListener('submit', handlePartialSearch);
+                    }
 
                 });
 
