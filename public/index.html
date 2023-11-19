@@ -21,6 +21,10 @@
                 <button onclick="addLogicalOperator('OR')">OR</button>
             </span>
         </div>
+        <div>
+            <input type="checkbox" id="partialQueryCheckbox" onchange="handlePartialQueryCheck()">
+            <label for="partialQueryCheckbox">Partial Query</label>
+        </div>
     </header>
 
     <main id="searchResults" class="results-container">
@@ -29,11 +33,13 @@
 
     <script>
         function handleInput(event) {
-            const searchInput = document.getElementById('searchInput');
-            const query = searchInput.value.trim();
-            // You can directly perform the search here passing the query to Elasticsearch
-            searchElasticsearch(query)
-        }
+                const searchInput = document.getElementById('searchInput');
+                const query = searchInput.value.trim();
+                // You can directly perform the search here passing the query to Elasticsearch
+                if (!document.getElementById('partialQueryCheckbox').checked) {
+                    searchElasticsearch(query);
+                }
+            }
 
         function addLogicalOperator(operator) {
             const searchInput = document.getElementById('searchInput');
@@ -151,6 +157,56 @@
                     searchResults.appendChild(resultElement);
                 });
             }
+        }
+
+        function handlePartialQueryCheck() {
+                const partialQueryCheckbox = document.getElementById('partialQueryCheckbox');
+                const searchForm = document.getElementById('searchForm');
+
+                if (partialQueryCheckbox.checked) {
+                    // Disable the default search form
+                    searchForm.removeEventListener('submit', function (event) {
+                        event.preventDefault();
+                        const searchTerm = document.getElementById('searchInput').value;
+                        searchElasticsearch(searchTerm);
+                    });
+                    searchForm.innerHTML = ''; // Clear the default search form
+
+                    // Create a new search bar for partial queries
+                    const partialSearchInput = document.createElement('input');
+                    partialSearchInput.setAttribute('type', 'text');
+                    partialSearchInput.setAttribute('id', 'partialSearchInput');
+                    partialSearchInput.setAttribute('placeholder', 'Partial Search...');
+                    partialSearchInput.setAttribute('oninput', 'handlePartialInput(event)');
+                    const partialSearchButton = document.createElement('button');
+                    partialSearchButton.setAttribute('type', 'submit');
+                    partialSearchButton.textContent = 'Partial Search';
+                    const partialSearchForm = document.createElement('form');
+                    partialSearchForm.setAttribute('id', 'partialSearchForm');
+                    partialSearchForm.appendChild(partialSearchInput);
+                    partialSearchForm.appendChild(partialSearchButton);
+
+                    document.querySelector('header').appendChild(partialSearchForm);
+                } else {
+                    // Re-enable the default search form
+                    searchForm.addEventListener('submit', function (event) {
+                        event.preventDefault();
+                        const searchTerm = document.getElementById('searchInput').value;
+                        searchElasticsearch(searchTerm);
+                    });
+                    const partialSearchForm = document.getElementById('partialSearchForm');
+                    if (partialSearchForm) {
+                        partialSearchForm.remove(); // Remove the partial search form
+                    }
+                }
+            }
+
+        function handlePartialInput(event) {
+                const partialSearchInput = document.getElementById('partialSearchInput');
+                const partialQuery = partialSearchInput.value.trim();
+                // Perform Elasticsearch for partial query here
+                console.log('Partial Query = ', partialQuery);
+                // Perform your Elasticsearch operation here for the partial query
         }
     </script>
 </body>
