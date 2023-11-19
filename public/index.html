@@ -14,7 +14,7 @@
         <div class="search-container">
             <form id="searchForm">
                 <input type="text" id="searchInput" placeholder="Search..." oninput="handleInput(event)">
-                <button type="submit">Search</button>
+                <button type="submit">Completed Search</button>
             </form>
             <span class='operators'>
                 <button onclick="addLogicalOperator('AND')">AND</button>
@@ -173,10 +173,29 @@
                         partialSearchInput.setAttribute('type', 'text');
                         partialSearchInput.setAttribute('id', 'partialSearchInput');
                         partialSearchInput.setAttribute('placeholder', 'Partial Search...');
-                        partialSearchInput.setAttribute('oninput', 'handlePartialInput(event)');
+                        partialSearchInput.style.cssText = `
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+        outline: none;
+        margin-right: 6px;
+    `;
+
                         const partialSearchButton = document.createElement('button');
                         partialSearchButton.setAttribute('type', 'submit');
                         partialSearchButton.textContent = 'Partial Search';
+                        partialSearchButton.setAttribute('id', 'partialSearchButton');
+                        partialSearchButton.style.cssText = `
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        background-color: #0366d6;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s ease-in-out;
+    `;
                         const newPartialSearchForm = document.createElement('form');
                         newPartialSearchForm.setAttribute('id', 'partialSearchForm');
                         newPartialSearchForm.addEventListener('submit', function (event) {
