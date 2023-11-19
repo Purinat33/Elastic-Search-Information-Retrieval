@@ -29,12 +29,13 @@
         <!-- Search results will be displayed here -->
     </main>
 
-    <script src="search.js"></script>
+    <!-- <script src="search.js"></script> -->
     <script>
         function handleInput(event) {
             const searchInput = document.getElementById('searchInput');
             const query = searchInput.value.trim();
             // You can directly perform the search here passing the query to Elasticsearch
+            searchElasticsearch(query)
         }
 
         function addLogicalOperator(operator) {
@@ -62,6 +63,7 @@
 
         
     function searchElasticsearch(query) {
+        console.log('Query = ', query);
         const queryToUse = query.trim(); // Remove leading/trailing whitespaces
 
         if (queryToUse === '') {
@@ -71,13 +73,16 @@
 
         // Split the query by spaces to handle logical operators
         const terms = queryToUse.split(/\s+/);
+        console.log(terms);
         const shouldClauses = [];
         let currentOperator = 'OR'; // Default operator is OR
 
         terms.forEach(term => {
             if (term.toUpperCase() === 'AND') {
+                console.log('AND operator');
                 currentOperator = 'AND'; // Set the operator to AND if encountered
             } else if (term.toUpperCase() === 'OR') {
+                console.log('OR operator');
                 currentOperator = 'OR'; // Set the operator to OR if encountered
             } else {
                 // For other terms, construct wildcard queries for multiple fields
