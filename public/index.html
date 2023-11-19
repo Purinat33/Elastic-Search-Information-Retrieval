@@ -167,10 +167,15 @@
                 const partialQueryCheckbox = document.getElementById('partialQueryCheckbox');
                 const partialSearchForm = document.getElementById('partialSearchForm');
                 const searchInput = document.getElementById('searchInput');
+                const andButton = document.querySelector('.operators button:nth-child(1)');
+                const orButton = document.querySelector('.operators button:nth-child(2)');
 
                 if (partialQueryCheckbox.checked) {
                     searchInput.value = '';
                     searchInput.disabled = true;
+                    andButton.disabled = true; // Disable the AND button
+                    orButton.disabled = true; // Disable the OR button
+
                     if (!partialSearchForm) {
                         // Create a new search bar for partial queries if it doesn't exist
                         const partialSearchInput = document.createElement('input');
@@ -223,7 +228,8 @@
                     }
                 } else {
                     searchInput.disabled = false;
-
+                    andButton.disabled = false; 
+                    orButton.disabled = false; 
                     // Remove the partial search bar if it exists
                     if (partialSearchForm) {
                         partialSearchForm.value = '';
