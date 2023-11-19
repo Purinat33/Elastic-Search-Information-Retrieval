@@ -21,10 +21,13 @@
                 <button onclick="addLogicalOperator('OR')">OR</button>
             </span>
         </div>
+        <br>
         <div>
-            <input type="checkbox" id="partialQueryCheckbox" onchange="handlePartialQueryCheck()">
-            <label for="partialQueryCheckbox">Partial Query</label>
+            <input type="checkbox" id="partialQueryCheckbox" onchange="handlePartialQueryCheck()"
+                style="width: 20px; height: 20px; margin-right: 5px;">
+            <label for="partialQueryCheckbox" style="font-size: large;">Partial Query</label>
         </div>
+
     </header>
 
     <main id="searchResults" class="results-container">
@@ -198,11 +201,16 @@
     `;
                         const newPartialSearchForm = document.createElement('form');
                         newPartialSearchForm.setAttribute('id', 'partialSearchForm');
-                        newPartialSearchForm.addEventListener('submit', function (event) {
-                            event.preventDefault();
-                            const partialQuery = document.getElementById('partialSearchInput').value.trim();
-                            handlePartialInput(partialQuery); // Pass the partial query to the function
+                        // newPartialSearchForm.addEventListener('submit', function (event) {
+                        //     event.preventDefault();
+                        //     const partialQuery = document.getElementById('partialSearchInput').value.trim();
+                        //     handlePartialInput(partialQuery); // Pass the partial query to the function
+                        // });
+                        partialSearchInput.addEventListener('input', function (event) {
+                            const partialQuery = event.target.value.trim();
+                            handlePartialInput(partialQuery);
                         });
+                        
 
                         newPartialSearchForm.appendChild(partialSearchInput);
                         newPartialSearchForm.appendChild(partialSearchButton);
@@ -288,6 +296,7 @@
                         const partialQuery = event.target.value.trim();
                         handlePartialInput(partialQuery);
                     });
+
                 });
 
 
