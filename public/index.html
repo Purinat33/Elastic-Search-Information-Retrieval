@@ -36,6 +36,22 @@
     </main>
 
     <script>
+        // Check if the URL is not intended and redirect to the desired location
+            function preventUnintendedRedirect() {
+                const currentURL = window.location.href;
+                const intendedURL = 'http://localhost:3000/'; // Update with your intended URL
+
+                if (currentURL !== intendedURL) {
+                    window.location.href = intendedURL; // Redirect to the intended URL
+                }
+            }
+
+            // Execute the check when the DOM content is loaded
+            document.addEventListener('DOMContentLoaded', function () {
+                preventUnintendedRedirect();
+            });
+
+
         function handleInput(event) {
                 const searchInput = document.getElementById('searchInput');
                 const query = searchInput.value.trim();
