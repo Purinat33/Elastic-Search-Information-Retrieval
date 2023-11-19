@@ -182,8 +182,9 @@
                         newPartialSearchForm.addEventListener('submit', function (event) {
                             event.preventDefault();
                             const partialQuery = document.getElementById('partialSearchInput').value.trim();
-                            searchElasticsearch(partialQuery);
+                            handlePartialInput(partialQuery); // Pass the partial query to the function
                         });
+
                         newPartialSearchForm.appendChild(partialSearchInput);
                         newPartialSearchForm.appendChild(partialSearchButton);
 
@@ -201,13 +202,76 @@
                 }
             }
 
-        function handlePartialInput(event) {
-                const partialSearchInput = document.getElementById('partialSearchInput');
-                const partialQuery = partialSearchInput.value.trim();
-                // Perform Elasticsearch for partial query here
-                console.log('Partial Query = ', partialQuery);
-                // Perform your Elasticsearch operation here for the partial query
-        }
+            function handlePartialInput(partialQuery) {
+                    if (partialQuery === '') {
+                        displaySearchResults([]); // Display no results if partial query is empty
+                        return; // Exit function early if partial query is empty
+                    }
+
+                    // Construct a wildcard query for multiple fields (Name, Description, Website)
+                    const requestBody = {
+                        query: {
+                            bool: {
+                                should: [
+                                    {
+                                        wildcard: {
+                                            Name: `*${partialQuery.toLowerCase()}*` // Lowercasing the query for case-insensitive search
+                                        }
+                                    },
+                                    {
+                                        wildcard: {
+                                            Description: `*${partialQuery.toLowerCase()}*`
+                                        }
+                                    },
+                                    {
+                                        wildcard: {
+                                            Website: `*${partialQuery.toLowerCase()}*`
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    };
+
+                    const url = `http://localhost:9200/university/_search`;
+
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestBody)
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            displaySearchResults(data.hits.hits);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching data from Elasticsearch:', error);
+                        });
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    const partialQueryCheckbox = document.getElementById('partialQueryCheckbox');
+                    const partialSearchInput = document.getElementById('partialSearchInput');
+
+                    partialQueryCheckbox.addEventListener('change', function () {
+                        if (partialQueryCheckbox.checked) {
+                            partialSearchInput.value = '';
+                            partialSearchInput.disabled = false;
+                        } else {
+                            partialSearchInput.value = '';
+                            partialSearchInput.disabled = true;
+                        }
+                    });
+
+                    partialSearchInput.addEventListener('input', function (event) {
+                        const partialQuery = event.target.value.trim();
+                        handlePartialInput(partialQuery);
+                    });
+                });
+
+
     </script>
 </body>
 
