@@ -161,42 +161,42 @@
 
         function handlePartialQueryCheck() {
                 const partialQueryCheckbox = document.getElementById('partialQueryCheckbox');
-                const searchForm = document.getElementById('searchForm');
+                const partialSearchForm = document.getElementById('partialSearchForm');
+                const searchInput = document.getElementById('searchInput');
 
                 if (partialQueryCheckbox.checked) {
-                    // Disable the default search form
-                    searchForm.removeEventListener('submit', function (event) {
-                        event.preventDefault();
-                        const searchTerm = document.getElementById('searchInput').value;
-                        searchElasticsearch(searchTerm);
-                    });
-                    searchForm.innerHTML = ''; // Clear the default search form
+                    searchInput.value = '';
+                    searchInput.disabled = true;
+                    if (!partialSearchForm) {
+                        // Create a new search bar for partial queries if it doesn't exist
+                        const partialSearchInput = document.createElement('input');
+                        partialSearchInput.setAttribute('type', 'text');
+                        partialSearchInput.setAttribute('id', 'partialSearchInput');
+                        partialSearchInput.setAttribute('placeholder', 'Partial Search...');
+                        partialSearchInput.setAttribute('oninput', 'handlePartialInput(event)');
+                        const partialSearchButton = document.createElement('button');
+                        partialSearchButton.setAttribute('type', 'submit');
+                        partialSearchButton.textContent = 'Partial Search';
+                        const newPartialSearchForm = document.createElement('form');
+                        newPartialSearchForm.setAttribute('id', 'partialSearchForm');
+                        newPartialSearchForm.addEventListener('submit', function (event) {
+                            event.preventDefault();
+                            const partialQuery = document.getElementById('partialSearchInput').value.trim();
+                            searchElasticsearch(partialQuery);
+                        });
+                        newPartialSearchForm.appendChild(partialSearchInput);
+                        newPartialSearchForm.appendChild(partialSearchButton);
 
-                    // Create a new search bar for partial queries
-                    const partialSearchInput = document.createElement('input');
-                    partialSearchInput.setAttribute('type', 'text');
-                    partialSearchInput.setAttribute('id', 'partialSearchInput');
-                    partialSearchInput.setAttribute('placeholder', 'Partial Search...');
-                    partialSearchInput.setAttribute('oninput', 'handlePartialInput(event)');
-                    const partialSearchButton = document.createElement('button');
-                    partialSearchButton.setAttribute('type', 'submit');
-                    partialSearchButton.textContent = 'Partial Search';
-                    const partialSearchForm = document.createElement('form');
-                    partialSearchForm.setAttribute('id', 'partialSearchForm');
-                    partialSearchForm.appendChild(partialSearchInput);
-                    partialSearchForm.appendChild(partialSearchButton);
+                        document.querySelector('header').appendChild(newPartialSearchForm);
 
-                    document.querySelector('header').appendChild(partialSearchForm);
+                    }
                 } else {
-                    // Re-enable the default search form
-                    searchForm.addEventListener('submit', function (event) {
-                        event.preventDefault();
-                        const searchTerm = document.getElementById('searchInput').value;
-                        searchElasticsearch(searchTerm);
-                    });
-                    const partialSearchForm = document.getElementById('partialSearchForm');
+                    searchInput.disabled = false;
+
+                    // Remove the partial search bar if it exists
                     if (partialSearchForm) {
-                        partialSearchForm.remove(); // Remove the partial search form
+                        partialSearchForm.value = '';
+                        partialSearchForm.remove();
                     }
                 }
             }
