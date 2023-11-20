@@ -1,5 +1,87 @@
 # University Search System using Elastic Search and HTML
 
+## Setup Guide:
+Setting up an Elastic Stack (Elasticsearch, Kibana, Logstash) and running a web system that interacts with Elasticsearch involves several steps. Here's a step-by-step guide assuming no Elasticsearch or Logstash is installed initially:
+
+
+### Step 1: Install Elasticsearch and Logstash
+
+1. **Download and Install Elasticsearch:**
+   - Go to the Elasticsearch downloads page: [Elasticsearch Downloads](https://www.elastic.co/downloads/elasticsearch)
+   - Download the appropriate version for your system.
+   - Follow the installation instructions for your operating system.
+
+2. **Download and Install Logstash:**
+   - Go to the Logstash downloads page: [Logstash Downloads](https://www.elastic.co/downloads/logstash)
+   - Download the suitable version for your system.
+   - Follow the installation instructions.
+
+### Step 2: Configure Elasticsearch
+
+1. Open the `elasticsearch.yml` file located in the Elasticsearch config folder.
+
+2. Add the provided lines to the `elasticsearch.yml` file (Located where you installed elasticsearch originally): 
+
+    ```yaml
+    http.cors.enabled: true
+    http.cors.allow-origin: "*"
+    http.cors.allow-methods: OPTIONS, HEAD, GET, POST, PUT, DELETE
+    http.cors.allow-headers: X-Requested-With, X-Auth-Token, Content-Type, Content-Length
+    http.cors.allow-credentials: true
+    xpack.security.enabled: false
+    ```
+
+3. Save the changes and restart Elasticsearch for the changes to take effect.
+
+4. 
+
+### Step 3: Set Up Your Web System
+
+1. Clone the repository. Run `git clone https://github.com/Purinat33/Elastic-Search-Information-Retrieval.git`.
+
+2. Open a terminal and navigate to the project directory.
+
+3. Install Node.js dependencies:
+   ```
+   npm install
+   ```
+
+### Step 4: Run Elasticsearch and Logstash
+
+1. Start Elasticsearch by running its executable file or service depending on your system.
+
+2. Start Logstash by running its executable file or service.
+
+```shell
+cd path/to/logstash
+./bin/logstash -f /path/to/uni_brief.csv
+```
+
+### Step 5: Run Your Web System
+
+1. Start your Node.js server:
+   ```
+   node server.js
+   ```
+
+2. Open a web browser and navigate to `http://localhost:3000` (assuming your web system is configured to run on port 3000).
+
+### Step 6: Test Your Web System
+
+1. Use the web interface to interact with Elasticsearch.
+
+2. Test search functionalities to ensure that your web system is querying Elasticsearch and displaying results correctly.
+
+### Additional Notes:
+
+- **Data Import:** If your web system involves indexing data into Elasticsearch, you'll need to set up Logstash configurations to ingest data from a source (e.g., CSV file `uni_brief.csv`).
+- **Security Consideration:** Disabling security (`xpack.security.enabled: false`) is for local development purposes. In a production environment, ensure to configure proper security measures.
+- **Troubleshooting:** Check Elasticsearch and Logstash logs for any errors or issues that may arise during setup or while running your web system.
+
+This guide provides a basic outline for setting up your Elastic Stack and running the web system locally. Adjustments might be necessary based on your specific system requirements and configurations.
+
+## Elastic Search and Code Overview
+
 ### HTML Structure
 - The HTML contains a form with an input field for search, buttons for logical operators, and a checkbox for partial query.
 - It also has a main section where search results are displayed.
