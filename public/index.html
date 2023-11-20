@@ -181,12 +181,12 @@
         }
 
         // Function to display search results in the UI
-        function displaySearchResults(results) {
+       function displaySearchResults(results) {
             const searchResults = document.getElementById('searchResults');
             searchResults.innerHTML = ''; // Clear previous search results
 
             if (results.length === 0) {
-                // If no results found, create a message card
+                // Display a message when no results are found
                 const noResultsCard = document.createElement('div');
                 noResultsCard.classList.add('result-box');
                 noResultsCard.innerHTML = `<p>No Results Found</p>`;
@@ -196,17 +196,20 @@
                 results.forEach(result => {
                     const resultElement = document.createElement('div');
                     resultElement.classList.add('result-box');
-                    resultElement.innerHTML = `<h3>${result._source.Name}</h3><p>${result._source.Description}</p>`;
-                    
-                    // If a website is available, add a link to visit the website
-                    if (result._source.Website) {
-                        resultElement.innerHTML += `<a href="${result._source.Website}" target="_blank">Visit Website</a>`;
-                    }
+                    resultElement.innerHTML = `
+                <h3>${result._source.Name}</h3>
+                <p>${result._source.Description}</p>
+                <p>Result's Relevance: ${result._score}</p>`; // Display the score
+
+                if (result._source.Website) {
+                    resultElement.innerHTML += `<a href="${result._source.Website}" target="_blank">Visit Website</a>`;
+                }
 
                     searchResults.appendChild(resultElement); // Display each search result
                 });
             }
         }
+
 
         // Function to handle partial query checkbox change
         function handlePartialQueryCheck() {
