@@ -11,18 +11,21 @@
 <body>
     <header>
         <h1>United States of Universities</h1>
+        <!-- Normal search: Where things like "TEXAS AND ARIZONA" works -->
         <div class="search-container">
             <form id="searchForm">
                 <input type="text" id="searchInput" placeholder="Search..." oninput="handleInput(event)">
                 <button type="submit">Completed Search</button>
                 <button type="reset">Clear Search</button>
             </form>
+            <!-- Buttons for some convenience like Adding AND and OR -->
             <span class='operators'>
                 <button onclick="addLogicalOperator('AND')">AND</button>
                 <button onclick="addLogicalOperator('OR')">OR</button>
             </span>
         </div>
         <br>
+        <!-- For searching with partial query (For when we want Tex to display Texas already) -->
         <div>
             <input type="checkbox" id="partialQueryCheckbox" onchange="handlePartialQueryCheck()"
                 style="width: 20px; height: 20px; margin-right: 5px;">
@@ -32,57 +35,78 @@
     </header>
 
     <main id="searchResults" class="results-container">
-        <!-- Search results will be displayed here -->
+        <!-- Search results from elastic search will be displayed here -->
     </main>
 
     <script>
         // Check if the URL is not intended and redirect to the desired location
-            function preventUnintendedRedirect() {
-                const currentURL = window.location.href;
-                const intendedURL = 'http://localhost:3000/'; // Update with your intended URL
+        //Because anything that isn't localhost:3000/ (e.g. ocalhost:3000/?)
+        //Those will broke the system
+        function preventUnintendedRedirect() {
+            // Retrieve the current URL of the window
+            const currentURL = window.location.href;
 
-                if (currentURL !== intendedURL) {
-                    window.location.href = intendedURL; // Redirect to the intended URL
-                }
+            // Define the intended URL that the user should be redirected to
+            const intendedURL = 'http://localhost:3000/'; // Update with your intended URL
+
+            // Check if the current URL is different from the intended URL
+            if (currentURL !== intendedURL) {
+                // Redirect the user to the intended URL
+                window.location.href = intendedURL;
             }
-
-            // Execute the check when the DOM content is loaded
-            document.addEventListener('DOMContentLoaded', function () {
-                preventUnintendedRedirect();
-            });
+        }
 
 
+        // Execute the check when the DOM content is loaded
+        document.addEventListener('DOMContentLoaded', function () {
+            preventUnintendedRedirect();
+        });
+
+
+        //This function only works on the default search-bar (complete search)
         function handleInput(event) {
-                const searchInput = document.getElementById('searchInput');
-                const query = searchInput.value.trim();
-                // You can directly perform the search here passing the query to Elasticsearch
-                if (!document.getElementById('partialQueryCheckbox').checked) {
-                    searchElasticsearch(query);
-                }
+            const searchInput = document.getElementById('searchInput');
+            const query = searchInput.value.trim();
+            // Check if the partial query checkbox is unchecked before initiating the search
+            if (!document.getElementById('partialQueryCheckbox').checked) {
+                // Perform the search by passing the query to Elasticsearch
+                searchElasticsearch(query);
             }
+        }
 
+
+        // I don't think this function works(?) or did it?
         function addLogicalOperator(operator) {
             const searchInput = document.getElementById('searchInput');
             const currentQuery = searchInput.value.trim();
             const selectionStart = searchInput.selectionStart;
 
+            // Append the logical operator to the search query at the cursor position
             if (currentQuery.length > 0) {
                 searchInput.value = `${currentQuery} ${operator} `;
             } else {
                 searchInput.value = `${operator} `;
             }
 
+            // Set the cursor after the inserted operator for further typing
             searchInput.setSelectionRange(selectionStart + operator.length + 1, selectionStart + operator.length + 1);
 
-            // You can handle the operator here or include it in the search directly
+            // Optionally, we can handle or store the currently selected operator
             const currentOperator = operator;
         }
 
+        // Use for form submission button (which we basically don't need since it's real time searching but)
+        // Removing any of these fragile modules broke the system :shrug:
         document.getElementById('searchForm').addEventListener('submit', function (event) {
-            event.preventDefault();
+            event.preventDefault(); // Prevents the default form submission behavior
+
+            // Retrieve the search term from the input field
             const searchTerm = document.getElementById('searchInput').value;
+
+            // Passes the search term to the searchElasticsearch function for processing
             searchElasticsearch(searchTerm);
         });
+
 
 
         function searchElasticsearch(query) {
@@ -114,7 +138,7 @@
                         }
                     };
 
-                    // Use 'must' for 'AND' and 'should' for 'OR'
+                    // Use 'must' for 'AND' and 'should' for 'OR' (Elastic Search stuff)
                     if (currentOperator === 'AND' && index > 0) {
                         const previousClause = shouldClauses.pop(); // Remove the last added query
                         shouldClauses.push({
@@ -128,6 +152,7 @@
                 }
             });
 
+            // Construct the Elasticsearch request body with 'should' clauses
             const requestBody = {
                 query: {
                     bool: {
@@ -138,6 +163,7 @@
 
             const url = `http://localhost:9200/university/_search`;
 
+            // Perform a POST request to Elasticsearch with the constructed query
             fetch(url, {
                 method: 'POST',
                 headers: {
@@ -147,51 +173,59 @@
             })
                 .then(response => response.json())
                 .then(data => {
-                    displaySearchResults(data.hits.hits);
+                    displaySearchResults(data.hits.hits); // Display search results using the obtained data (Hit)
                 })
                 .catch(error => {
                     console.error('Error fetching data from Elasticsearch:', error);
                 });
         }
 
-
+        // Function to display search results in the UI
         function displaySearchResults(results) {
             const searchResults = document.getElementById('searchResults');
-            searchResults.innerHTML = '';
+            searchResults.innerHTML = ''; // Clear previous search results
 
             if (results.length === 0) {
+                // If no results found, create a message card
                 const noResultsCard = document.createElement('div');
                 noResultsCard.classList.add('result-box');
                 noResultsCard.innerHTML = `<p>No Results Found</p>`;
-                searchResults.appendChild(noResultsCard);
+                searchResults.appendChild(noResultsCard); // Display no results message
             } else {
+                // Iterate through each matching result and create result elements
                 results.forEach(result => {
                     const resultElement = document.createElement('div');
                     resultElement.classList.add('result-box');
                     resultElement.innerHTML = `<h3>${result._source.Name}</h3><p>${result._source.Description}</p>`;
-
+                    
+                    // If a website is available, add a link to visit the website
                     if (result._source.Website) {
                         resultElement.innerHTML += `<a href="${result._source.Website}" target="_blank">Visit Website</a>`;
                     }
 
-                    searchResults.appendChild(resultElement);
+                    searchResults.appendChild(resultElement); // Display each search result
                 });
             }
         }
 
+        // Function to handle partial query checkbox change
         function handlePartialQueryCheck() {
+                // Get required DOM elements
                 const partialQueryCheckbox = document.getElementById('partialQueryCheckbox');
                 const partialSearchForm = document.getElementById('partialSearchForm');
                 const searchInput = document.getElementById('searchInput');
                 const andButton = document.querySelector('.operators button:nth-child(1)');
                 const orButton = document.querySelector('.operators button:nth-child(2)');
 
+                // If the partial query checkbox is checked
                 if (partialQueryCheckbox.checked) {
+                    // Clear and disable the main search input and logical operator buttons
                     searchInput.value = '';
                     searchInput.disabled = true;
                     andButton.disabled = true; // Disable the AND button
                     orButton.disabled = true; // Disable the OR button
 
+                    // Create a new search bar for partial queries if it doesn't exist
                     if (!partialSearchForm) {
                         // Create a new search bar for partial queries if it doesn't exist
                         const partialSearchInput = document.createElement('input');
@@ -199,30 +233,31 @@
                         partialSearchInput.setAttribute('id', 'partialSearchInput');
                         partialSearchInput.setAttribute('placeholder', 'Partial Search...');
                         partialSearchInput.style.cssText = `
-        padding: 8px 12px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 16px;
-        outline: none;
-        margin-right: 6px;
-    `;
+                            padding: 8px 12px;
+                            border: 1px solid #ccc;
+                            border-radius: 4px;
+                            font-size: 16px;
+                            outline: none;
+                            margin-right: 6px;
+                        `;
 
+                        // Create a button for partial search
                         const partialSearchButton = document.createElement('button');
                         partialSearchButton.setAttribute('type', 'button');
                         partialSearchButton.textContent = 'Partial Search';
                         partialSearchButton.setAttribute('id', 'partialSearchButton');
                         partialSearchButton.style.cssText = `
-        padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
-        background-color: #0366d6;
-        color: white;
-        font-size: 16px;
-        cursor: pointer;
-        transition: background-color 0.3s ease-in-out;
-    `;
+                            padding: 8px 16px;
+                            border: none;
+                            border-radius: 4px;
+                            background-color: #0366d6;
+                            color: white;
+                            font-size: 16px;
+                            cursor: pointer;
+                            transition: background-color 0.3s ease-in-out;
+                        `;
 
-
+                        // Create a new form for partial search and add input and button
                         const newPartialSearchForm = document.createElement('form');
                         newPartialSearchForm.setAttribute('id', 'partialSearchForm');
                         // newPartialSearchForm.addEventListener('submit', function (event) {
@@ -230,19 +265,24 @@
                         //     const partialQuery = document.getElementById('partialSearchInput').value.trim();
                         //     handlePartialInput(partialQuery); // Pass the partial query to the function
                         // });
+
+                        // Listen to input changes in the partial search field
                         partialSearchInput.addEventListener('input', function (event) {
                             const partialQuery = event.target.value.trim();
-                            handlePartialInput(partialQuery);
+                            handlePartialInput(partialQuery); // Handle the partial query input
                         });
                         
-
+                        // Append input and button to the form
                         newPartialSearchForm.appendChild(partialSearchInput);
                         newPartialSearchForm.appendChild(partialSearchButton);
 
+                        // Append the form to the header section
                         document.querySelector('header').appendChild(newPartialSearchForm);
 
                     }
+                    // If the partial query checkbox is unchecked
                 } else {
+                    // Enable the main search input and logical operator buttons
                     searchInput.disabled = false;
                     andButton.disabled = false; 
                     orButton.disabled = false; 
@@ -254,74 +294,88 @@
                 }
             }
 
+            // Function to handle partial queries
             function handlePartialInput(partialQuery) {
-                    if (partialQuery === '') {
-                        displaySearchResults([]); // Display no results if partial query is empty
-                        return; // Exit function early if partial query is empty
-                    }
-
-                    // Construct a wildcard query for multiple fields (Name, Description, Website)
-                    const requestBody = {
-                        query: {
-                            bool: {
-                                should: [
-                                    {
-                                        wildcard: {
-                                            Name: `*${partialQuery.toLowerCase()}*` // Lowercasing the query for case-insensitive search
-                                        }
-                                    },
-                                    {
-                                        wildcard: {
-                                            Description: `*${partialQuery.toLowerCase()}*`
-                                        }
-                                    },
-                                    {
-                                        wildcard: {
-                                            Website: `*${partialQuery.toLowerCase()}*`
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    };
-
-                    const url = `http://localhost:9200/university/_search`;
-
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(requestBody)
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            displaySearchResults(data.hits.hits);
-                        })
-                        .catch(error => {
-                            console.error('Error fetching data from Elasticsearch:', error);
-                        });
+                // If the partial query is empty, display no results and exit early
+                if (partialQuery === '') {
+                    displaySearchResults([]); // Display no results if partial query is empty
+                    return; // Exit function early if partial query is empty
                 }
 
+                // Construct a wildcard query for multiple fields (Name, Description, Website)
+                const requestBody = {
+                    query: {
+                        bool: {
+                            should: [
+                                {
+                                    wildcard: {
+                                        Name: `*${partialQuery.toLowerCase()}*` // Lowercasing the query for case-insensitive search
+                                    }
+                                },
+                                {
+                                    wildcard: {
+                                        Description: `*${partialQuery.toLowerCase()}*`
+                                    }
+                                },
+                                {
+                                    wildcard: {
+                                        Website: `*${partialQuery.toLowerCase()}*`
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                };
+
+                const url = `http://localhost:9200/university/_search`;
+
+                // Fetch data from Elasticsearch
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                })
+                    .then(response => response.json()) // Parse the JSON response
+                    .then(data => {
+                        displaySearchResults(data.hits.hits); // Display search results based on Elasticsearch response
+                    })
+                    .catch(error => {
+                        console.error('Error fetching data from Elasticsearch:', error); // Log errors if any during fetching
+                    });
+                }
+
+
+                // When the DOM content is loaded, set up event listeners and configurations related to partial search
                 document.addEventListener('DOMContentLoaded', function () {
+                    // Get the checkbox and the input field for partial queries
                     const partialQueryCheckbox = document.getElementById('partialQueryCheckbox');
                     const partialSearchInput = document.getElementById('partialSearchInput');
 
+                    // Listen for changes in the checkbox state
                     partialQueryCheckbox.addEventListener('change', function () {
+                        // Enable or disable the partial search input based on the checkbox state
                         if (partialQueryCheckbox.checked) {
-                            partialSearchInput.value = '';
-                            partialSearchInput.disabled = false;
+                            partialSearchInput.value = ''; // Clear the input when enabling
+                            partialSearchInput.disabled = false; // Enable input when checkbox is checked
                         } else {
-                            partialSearchInput.value = '';
-                            partialSearchInput.disabled = true;
+                            partialSearchInput.value = ''; // Clear the input when disabling
+                            partialSearchInput.disabled = true; // Disable input when checkbox is unchecked
                         }
                     });
 
+
+                    // Listen for input in the partial search input field
                     partialSearchInput.addEventListener('input', function (event) {
+                        // Trim and get the value from the input field as the partial query
                         const partialQuery = event.target.value.trim();
+                        // Call the function to handle the partial query input
                         handlePartialInput(partialQuery);
                     });
-                    // Remove the submit event listener for the partial search form
+
+
+                    // Remove the submit event listener for the partial search form if it exists
                     const partialSearchForm = document.getElementById('partialSearchForm');
                     if (partialSearchForm) {
                         partialSearchForm.removeEventListener('submit', handlePartialSearch);

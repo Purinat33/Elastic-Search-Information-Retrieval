@@ -32,3 +32,80 @@
     - Remove the submit event listener for the partial search form (which is commented out).
 
 This program integrates UI interaction with Elasticsearch queries and dynamically adjusts functionality based on the user's interaction with the search components.
+
+<hr>
+
+## How to use Elastic Search for Query
+
+Constructing a query for Elasticsearch involves forming a JSON object that adheres to the Elasticsearch Query DSL (Domain Specific Language). The structure of the query depends on the type of search you want to perform, whether it's a full-text search, term-based search, or a more complex query involving logical operations.
+
+Here's an example of constructing a simple query using the Elasticsearch Query DSL:
+
+### Example Query Structure:
+
+Let's say we want to perform a full-text search for universities where the `Name`, `Description`, or `Website` matches a given term.
+
+```javascript
+const requestBody = {
+    query: {
+        bool: {
+            should: [
+                {
+                    multi_match: {
+                        query: "your_search_term",
+                        fields: ["Name", "Description", "Website"]
+                    }
+                }
+            ]
+        }
+    }
+};
+```
+
+- `query`: Specifies the type of query being performed. Here, it's a `bool` query which allows combining multiple queries.
+- `bool`: Defines a boolean query that can contain multiple subqueries.
+- `should`: Within a `bool` query, `should` is used for conditions that should be met. This acts like an OR operator, where at least one condition should match.
+
+### Form of Data Returned from Elasticsearch:
+
+When you send a query to Elasticsearch, it processes the data based on your query parameters and returns a JSON response. This response usually contains information based on your query structure and the matching documents found in the Elasticsearch index.
+
+Here's a general structure of the response:
+
+```json
+{
+    "took": 5,
+    "timed_out": false,
+    "_shards": {
+        "total": 5,
+        "successful": 5,
+        "skipped": 0,
+        "failed": 0
+    },
+    "hits": {
+        "total": {
+            "value": 10,
+            "relation": "eq"
+        },
+        "hits": [
+            {
+                "_index": "your_index",
+                "_type": "_doc",
+                "_id": "1",
+                "_score": 4.0,
+                "_source": {
+                    "Name": "University Name",
+                    "Description": "Description of the university",
+                    "Website": "https://universitywebsite.com"
+                }
+            },
+            // More matching documents...
+        ]
+    }
+}
+```
+
+- `took`: Time taken by Elasticsearch to execute the query.
+- `hits`: Contains the matched documents along with their scores (`_score`) and source data (`_source`). Each hit represents a document from the index that matched the query.
+
+Constructing a query involves understanding the Elasticsearch Query DSL and tailoring it to suit your specific search requirements. The response will contain matching documents along with relevant metadata, allowing you to process and display the results accordingly in your application.
